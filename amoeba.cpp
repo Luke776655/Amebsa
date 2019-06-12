@@ -71,7 +71,6 @@ template <class T> class Amoeba
 	public:
 		Amoeba(double func(vector <T> &v), int n)
 		{
-			fff() = func;
 			srand (time(NULL));
 			//creating point table as starting point in the system
 			N = n;
@@ -81,50 +80,8 @@ template <class T> class Amoeba
 			print_arrow_table(point);
 			printf("Energy of the system %f\n\n", func(point));
 			//creating delta values table
-			vector <int> delta_tab;
-			for(int i=0; i<ndim; i++)
-			{
-				delta_tab.push_back(delta);
-			}
-
-			//adding delta values to the point table with extended dimention as p simplex
-
-			for(int i=0; i<ndim+1; i++)
-			{
-				vector<T> k;
-				for(int j=0; j<ndim; j++)
-				{
-					k.push_back(point[j]);
-				}
-				p.push_back(k);
-				if(i!=0)
-				{
-					p[i][i-1]+=delta_tab[i-1];
-				}
-			}
-			//getting y table of solutions
-			y.resize(ndim+1);
-			//yhi = 0;
-			mpts = p.size(); //number of rows
-			for(int i = 0; i<mpts; i++)
-			{
-				vector <T> x;
-				for(int j=0; j<ndim; j++)
-				{
-					x.push_back(p[i][j]);
-				}
-				y[i] = (func(x));
-			}
-			//parameters for iterating
-			nfunc = 0;
-			psum = get_psum(p, ndim, mpts);
-			it = 0;
-			int w = -1;
-			while(w<0)
-			{
-				w = minimize(func);
-			}
 		};
+		void minimize(double func(vector <double> &v));
 	private:
 		int N; //dimention of side of pseudo-square table
 		int delta = 1; //displacement
@@ -138,7 +95,7 @@ template <class T> class Amoeba
 		void print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo);
 		vector <double> get_psum(vector <vector <double> > &p, int ndim, int mpts);
 		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v));
-		int minimize(double func(vector <double> &v));
+		int amebsa_alg(double func(vector <double> &v));
 		vector<double> point;
 		int ndim;
 		vector <vector <double> > p;
@@ -149,7 +106,6 @@ template <class T> class Amoeba
 		int nfunc;
 		vector <double> psum;
 		double tt = -1;
-		double fff(vector <T> &v);
 };
 
 template <class T> vector <T> Amoeba<T>::create_random_table()
@@ -296,7 +252,49 @@ template <class T> double Amoeba<T>::amotsa(vector <vector <double> > &p, vector
 
 template <class T> void Amoeba<T>::minimize(double func(vector <double> &v))
 {
-	amebsa_alg(func);
+vector <int> delta_tab;
+	for(int i=0; i<ndim; i++)
+	{
+		delta_tab.push_back(delta);
+	}
+
+	//adding delta values to the point table with extended dimention as p simplex
+
+	for(int i=0; i<ndim+1; i++)
+	{
+		vector<T> k;
+		for(int j=0; j<ndim; j++)
+		{
+			k.push_back(point[j]);
+		}
+		p.push_back(k);
+		if(i!=0)
+		{
+			p[i][i-1]+=delta_tab[i-1];
+		}
+	}
+	//getting y table of solutions
+	y.resize(ndim+1);
+	yhi = 0;
+	mpts = p.size(); //number of rows
+	for(int i = 0; i<mpts; i++)
+	{
+		vector <T> x;
+		for(int j=0; j<ndim; j++)
+		{
+			x.push_back(p[i][j]);
+		}
+		y[i] = (func(x));
+	}
+	//parameters for iterating
+	nfunc = 0;
+	psum = get_psum(p, ndim, mpts);
+	it = 0;
+	int w = -1;
+	while(w<0)
+	{
+		w = amebsa_alg(func);
+	}
 }
 
 template <class T> int Amoeba<T>::amebsa_alg(double func(vector <double> &v))
@@ -399,6 +397,7 @@ template <class T> int Amoeba<T>::amebsa_alg(double func(vector <double> &v))
 int main()
 {
 	Amoeba<double> a(f, 15*15);
+	a.minimize(f);
 	return 0;
 }
 
