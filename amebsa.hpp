@@ -1,20 +1,3 @@
-/*
-C++ implementation of the Nelder-Mead optimization algorithm (amoeba).
-In this case algorithm search for the energetic minimum of the arrows system.
-When all of the arrows are parallel, the system is in the global minimum.
-GNU GPL license v3
-
-Core algorithm code in line with
-Numerical Receipes
-The Art of Scientific Computing
-Third Edition
-W.H.Press, S.A.Teukolsky,
-W.T Vetterling, B.P.Flannery
-
-Łukasz Radziński
-lukasz.radzinski _at_ gmail _dot_ com
-*/
-
 #include<cstdio>
 #include<iostream>
 #include<cstdlib>
@@ -23,53 +6,10 @@ lukasz.radzinski _at_ gmail _dot_ com
 
 using namespace std;
 
-
-
-/*
-double f(vector <double> &A)
-{
-	//simple multidimentional parabola function for testing optimisation
-	//global minimum in 0
-	double s = 0.0;
-	for(int i=0; i<A.size(); i++)
-	{
-		s += A[i]*A[i];
-	}
-	return s;
-}*/
-
-
-double f(vector <double> &A)
-{
-	/*
-	potential energy function of the arrows system for testing optimisation
-	when the neighbour arrow is parallel: E = 0
-	when the neighbour arrow is orthogonal: E = 1
-	when the neighbour arrow is antiparallel: E = 2
-	global E is the sum of all arrows energy
-	global energetic minimum is when all of the arrows are parallel, then global E = 0
-	*/
-	double s = 0;
-	int N = A.size();
-	for (int i = 0; i<N; i++)
-	{
-		int k = sqrt(N);
-		if(i>=k) //top boundary
-			s = s-cos(abs(A[i]-A[i-k]))+1;
-		if(i<N-k) //bottom boundary
-			s = s-cos(abs(A[i]-A[i+k]))+1;
-		if(i%k!=0) //left boundary
-			s = s-cos(abs(A[i]-A[i-1]))+1;
-		if(i%k!=(k-1)) //right boundary
-			s = s-cos(abs(A[i]-A[i+1]))+1;
-	}
-	return s;
-}
-
-template <class T> class Amoeba
+template <class T> class Amebsa
 {
 	public:
-		Amoeba(double func(vector <T> &v), int n)
+		Amebsa(double func(vector <T> &v), int n)
 		{
 			srand (time(NULL));
 			//creating point table as starting point in the system
@@ -82,11 +22,12 @@ template <class T> class Amoeba
 			//creating delta values table
 		};
 		void minimize(double func(vector <double> &v));
+        vector <double> temperature = {1, 0.00000000001, 0};
+        int NMAX = 1000000; //maximum allowed number of function evaluations
 	private:
 		int N; //dimention of side of pseudo-square table
 		int delta = 1; //displacement
 		double ftol = 1e-6; //fractional convergence tolerance
-		int NMAX = 10000000; //maximum allowed number of function evaluations
 		double TINY = 1e-7; //tiny value preventing from dividing by 0
 		vector <T> create_random_table();
 		void print_table(vector <double> tab);
@@ -94,8 +35,8 @@ template <class T> class Amoeba
 		void print_arrow_table(vector <double> tab);
 		void print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo);
 		vector <double> get_psum(vector <vector <double> > &p, int ndim, int mpts);
-		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v));
-		int amebsa_alg(double func(vector <double> &v));
+		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v), double tt);
+		int amebsa_alg(double func(vector <double> &v), double tt);
 		vector<double> point;
 		int ndim;
 		vector <vector <double> > p;
@@ -105,10 +46,10 @@ template <class T> class Amoeba
 		int it;
 		int nfunc;
 		vector <double> psum;
-		double tt = -1;
+		//double tt;
 };
 
-template <class T> vector <T> Amoeba<T>::create_random_table()
+template <class T> vector <T> Amebsa<T>::create_random_table()
 {
 	/*
 	creating a starting point of the system:
@@ -123,7 +64,7 @@ template <class T> vector <T> Amoeba<T>::create_random_table()
 	return tab;
 }
 
-template <class T> void Amoeba<T>::print_table(vector <double> tab)
+template <class T> void Amebsa<T>::print_table(vector <double> tab)
 {
 	/*
 	printing values of the table
@@ -139,7 +80,7 @@ template <class T> void Amoeba<T>::print_table(vector <double> tab)
 	printf("\n");
 }
 
-template <class T> void Amoeba<T>::print_arrow(double s)
+template <class T> void Amebsa<T>::print_arrow(double s)
 {
 	/*
 	printing value as an arrow with proper slope
@@ -164,7 +105,7 @@ template <class T> void Amoeba<T>::print_arrow(double s)
 		printf("x ");
 }
 
-template <class T> void Amoeba<T>::print_arrow_table(vector <double> tab)
+template <class T> void Amebsa<T>::print_arrow_table(vector <double> tab)
 {
 	/*
 	printing values of the table as arrows with proper slope
@@ -178,7 +119,7 @@ template <class T> void Amoeba<T>::print_arrow_table(vector <double> tab)
 	printf("\n\n");
 }
 
-template <class T> void Amoeba<T>::print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo)
+template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo)
 {
 	/*
 	printing result of optimisation
@@ -204,7 +145,7 @@ template <class T> void Amoeba<T>::print_result(vector <double> y, vector <vecto
 	printf("Energy of the system %f\n\n", fmin);
 }
 
-template <class T> vector <double> Amoeba<T>::get_psum(vector <vector <double> > &p, int ndim, int mpts)
+template <class T> vector <double> Amebsa<T>::get_psum(vector <vector <double> > &p, int ndim, int mpts)
 {
 	/*
 	counting partial sum
@@ -222,7 +163,7 @@ template <class T> vector <double> Amoeba<T>::get_psum(vector <vector <double> >
 	return psum;
 }
 
-template <class T> double Amoeba<T>::amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v))
+template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v), double tt)
 {
 	/*
 	extrapolation by a factor fac through the face of the simplex across from the high point
@@ -250,7 +191,7 @@ template <class T> double Amoeba<T>::amotsa(vector <vector <double> > &p, vector
 	return yflu;
 }
 
-template <class T> void Amoeba<T>::minimize(double func(vector <double> &v))
+template <class T> void Amebsa<T>::minimize(double func(vector <double> &v))
 {
 vector <int> delta_tab;
 	for(int i=0; i<ndim; i++)
@@ -289,15 +230,20 @@ vector <int> delta_tab;
 	//parameters for iterating
 	nfunc = 0;
 	psum = get_psum(p, ndim, mpts);
-	it = 0;
-	int w = -1;
-	while(w<0)
-	{
-		w = amebsa_alg(func);
-	}
+	//it = 0;
+    for(int i=0; i<temperature.size(); i++)
+    {
+	    int w = -1;
+        it = 0;
+        nfunc = 0;
+	    while(w<0)
+	    {
+	    	w = amebsa_alg(func, -temperature[i]);
+	    }
+    }
 }
 
-template <class T> int Amoeba<T>::amebsa_alg(double func(vector <double> &v))
+template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v), double tt)
 {
 	int ilo=0;
 	double ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);
@@ -359,15 +305,15 @@ template <class T> int Amoeba<T>::amebsa_alg(double func(vector <double> &v))
 	}
 	nfunc += 2;
 
-	double ytry = amotsa(p, psum, y, ihi, ndim, -1.0, func); //simplex reflection
+	double ytry = amotsa(p, psum, y, ihi, ndim, -1.0, func, tt); //simplex reflection
 	if(ytry <= ylo)
 	{
-		ytry = amotsa(p, psum, y, ihi, ndim, 2.0, func); //simplex extrapolation
+		ytry = amotsa(p, psum, y, ihi, ndim, 2.0, func, tt); //simplex extrapolation
 	}
 	else if (ytry >= ynhi)
 	{
 		double ysave = yhi;
-		ytry = amotsa(p, psum, y, ihi, ndim, 0.5, func); //simplex contraction
+		ytry = amotsa(p, psum, y, ihi, ndim, 0.5, func, tt); //simplex contraction
 		if(ytry >= ysave)
 		{
 			for (int i=0;i<mpts;i++) {
@@ -392,12 +338,5 @@ template <class T> int Amoeba<T>::amebsa_alg(double func(vector <double> &v))
 	}
 	it++;
 	return -1;
-}
-
-int main()
-{
-	Amoeba<double> a(f, 15*15);
-	a.minimize(f);
-	return 0;
 }
 
