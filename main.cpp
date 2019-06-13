@@ -25,9 +25,15 @@ lukasz.radzinski _at_ gmail _dot_ com
 
 using namespace std;
 
+int N = 400;
+
 int main()
 {
-	Amebsa<double> a(multi_parabole, 15*15);
+    vector<double> v = create_random_2PI_table(N);
+	Amebsa<double> a(v);
+    a.show_iter_output = false;
+    cout<<a.fmin<<endl;
 	a.minimize(multi_parabole);
+    cout<<a.fmin<<endl;
 	return 0;
 }

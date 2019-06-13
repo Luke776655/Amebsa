@@ -45,3 +45,18 @@ double ferromagnetic(vector <double> &A)
 	}
 	return s;
 }
+
+vector <double> create_random_2PI_table(int n)
+{
+	/*
+	creating a starting point of the system:
+	n-dimentional table with random values
+	values range: [0, 2*pi)
+	*/
+	vector <double> tab(n);
+	for(int i = 0; i<n; i++)
+	{
+		tab[i] = fmod(rand(), 2*M_PI);
+	}
+	return tab;
+}

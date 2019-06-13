@@ -3,65 +3,62 @@
 #include<cstdlib>
 #include<vector>
 #include<cmath>
+#include<limits>
 
 using namespace std;
 
 template <class T> class Amebsa
 {
 	public:
-		Amebsa(double func(vector <T> &v), int n)
+		Amebsa(vector <T> &pt)
 		{
 			srand (time(NULL));
-			//creating point table as starting point in the system
-			N = n;
-			point = create_random_table();
-			ndim = point.size();
-			print_table(point);
-			print_arrow_table(point);
-			printf("Energy of the system %f\n\n", func(point));
-			//creating delta values table
+			point = pt;
+            N = pt.size();
+			ndim = N;
 		};
 		void minimize(double func(vector <double> &v));
         vector <double> temperature = {1, 0.00000000001, 0};
+        double fmin = numeric_limits<double>::max();
         int NMAX = 1000000; //maximum allowed number of function evaluations
-	private:
-		int N; //dimention of side of pseudo-square table
 		int delta = 1; //displacement
 		double ftol = 1e-6; //fractional convergence tolerance
 		double TINY = 1e-7; //tiny value preventing from dividing by 0
-		vector <T> create_random_table();
+        bool arrows_table_printing = false;
+        bool show_iter_output = true;
+        int iter_period = 1000;
+	private:
+		int N; //dimention of side of pseudo-square table
+        void print_array(vector <double> tab);
 		void print_table(vector <double> tab);
 		void print_arrow(double s);
 		void print_arrow_table(vector <double> tab);
 		void print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo);
 		vector <double> get_psum(vector <vector <double> > &p, int ndim, int mpts);
-		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v), double tt);
-		int amebsa_alg(double func(vector <double> &v), double tt);
+		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v));
+		int amebsa_alg(double func(vector <double> &v));
 		vector<double> point;
 		int ndim;
 		vector <vector <double> > p;
 		vector <double> y;
 		double yhi;
 		int mpts;
-		int it;
+		int iter;
 		int nfunc;
+        double tt;
 		vector <double> psum;
-		//double tt;
 };
 
-template <class T> vector <T> Amebsa<T>::create_random_table()
+template <class T> void Amebsa<T>::print_array(vector <double> tab)
 {
 	/*
-	creating a starting point of the system:
-	n-dimentional table with random values
-	values range: [0, 2*pi)
+	printing values of the array
 	*/
-	vector <T> tab(N);
 	for(int i = 0; i<N; i++)
 	{
-		tab[i] = fmod(rand(), 2*M_PI);
+		printf("%.2f  ", tab[i]);	
 	}
-	return tab;
+	printf("\n");
 }
 
 template <class T> void Amebsa<T>::print_table(vector <double> tab)
@@ -139,10 +136,16 @@ template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vecto
 		q[ilo][i] = z;
 		pmin[i] = q[0][i];
 	}
-	double fmin=k[0];
-	print_table(pmin);
-	print_arrow_table(pmin);
-	printf("Energy of the system %f\n\n", fmin);
+	fmin=k[0];
+    printf("\nIteration %d\tTemperature %g\n", iter, -tt);
+    if(arrows_table_printing == true)
+    {
+	    print_table(pmin);
+	    print_arrow_table(pmin);
+    }
+    else
+        print_array(pmin);
+	printf("Energy of the system %g\n\n", fmin);
 }
 
 template <class T> vector <double> Amebsa<T>::get_psum(vector <vector <double> > &p, int ndim, int mpts)
@@ -163,7 +166,7 @@ template <class T> vector <double> Amebsa<T>::get_psum(vector <vector <double> >
 	return psum;
 }
 
-template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v), double tt)
+template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v))
 {
 	/*
 	extrapolation by a factor fac through the face of the simplex across from the high point
@@ -193,7 +196,9 @@ template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector
 
 template <class T> void Amebsa<T>::minimize(double func(vector <double> &v))
 {
-vector <int> delta_tab;
+
+	//creating delta values table
+    vector <int> delta_tab;
 	for(int i=0; i<ndim; i++)
 	{
 		delta_tab.push_back(delta);
@@ -230,20 +235,20 @@ vector <int> delta_tab;
 	//parameters for iterating
 	nfunc = 0;
 	psum = get_psum(p, ndim, mpts);
-	//it = 0;
     for(int i=0; i<temperature.size(); i++)
     {
 	    int w = -1;
-        it = 0;
+        iter = 0;
         nfunc = 0;
+        tt = -temperature[i];
 	    while(w<0)
 	    {
-	    	w = amebsa_alg(func, -temperature[i]);
+	    	w = amebsa_alg(func);
 	    }
     }
 }
 
-template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v), double tt)
+template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v))
 {
 	int ilo=0;
 	double ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);
@@ -290,7 +295,6 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v), do
 	double rtol=2.0*abs(y[ihi]-y[ilo])/(abs(y[ihi])+abs(y[ilo])+TINY);
 	if (rtol < ftol)
 	{
-		printf("\nIteration %d\n", it);
 		print_result(y, p, ndim, ilo);
 		printf("Optimisation succeeded\n");
 		return 0;
@@ -298,22 +302,21 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v), do
 
 	if (nfunc >= NMAX)
 	{
-		printf("\nIteration %d\n", it);
 		print_result(y, p, ndim, ilo);
 		printf("Maximal number of iterations exceeded\n");
 		return 1;
 	}
 	nfunc += 2;
 
-	double ytry = amotsa(p, psum, y, ihi, ndim, -1.0, func, tt); //simplex reflection
+	double ytry = amotsa(p, psum, y, ihi, ndim, -1.0, func); //simplex reflection
 	if(ytry <= ylo)
 	{
-		ytry = amotsa(p, psum, y, ihi, ndim, 2.0, func, tt); //simplex extrapolation
+		ytry = amotsa(p, psum, y, ihi, ndim, 2.0, func); //simplex extrapolation
 	}
 	else if (ytry >= ynhi)
 	{
 		double ysave = yhi;
-		ytry = amotsa(p, psum, y, ihi, ndim, 0.5, func, tt); //simplex contraction
+		ytry = amotsa(p, psum, y, ihi, ndim, 0.5, func); //simplex contraction
 		if(ytry >= ysave)
 		{
 			for (int i=0;i<mpts;i++) {
@@ -330,13 +333,14 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v), do
 			psum = get_psum(p, ndim, mpts);
 		}
 	} else nfunc = nfunc-1;
-
-	if(it%1000 == 0)
-	{
-		printf("\nIteration %d\n", it);
-		print_result(y, p, ndim, ilo);
-	}
-	it++;
+    if(show_iter_output == true)
+    {
+	    if(iter%iter_period == 0)
+	    {
+		    print_result(y, p, ndim, ilo);
+	    }
+    }
+	iter++;
 	return -1;
 }
 
