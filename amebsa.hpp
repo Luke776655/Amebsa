@@ -16,10 +16,12 @@ template <class T> class Amebsa
 			point = pt;
             N = pt.size();
 			ndim = N;
+            pmin.resize(ndim);
 		};
-		void minimize(double func(vector <double> &v));
-        vector <double> temperature = {1, 0.00000000001, 0};
+		void minimize(double func(vector <T> &v));
+        vector <double> temperature = {1, 0.0000000001, 0};
         double fmin = numeric_limits<double>::max();
+        vector <T> pmin;
         int NMAX = 1000000; //maximum allowed number of function evaluations
 		int delta = 1; //displacement
 		double ftol = 1e-6; //fractional convergence tolerance
@@ -29,39 +31,39 @@ template <class T> class Amebsa
         int iter_period = 1000;
 	private:
 		int N; //dimention of side of pseudo-square table
-        void print_array(vector <double> tab);
-		void print_table(vector <double> tab);
-		void print_arrow(double s);
-		void print_arrow_table(vector <double> tab);
-		void print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo);
-		vector <double> get_psum(vector <vector <double> > &p, int ndim, int mpts);
-		double amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v));
-		int amebsa_alg(double func(vector <double> &v));
-		vector<double> point;
+        void print_array(vector <T> tab);
+		void print_table(vector <T> tab);
+		void print_arrow(T s);
+		void print_arrow_table(vector <T> tab);
+		void print_result(vector <double> y, vector <vector <T> > &p, int ndim, int ilo);
+		vector <T> get_psum(vector <vector <T> > &p, int ndim, int mpts);
+		double amotsa(vector <vector <T> > &p, vector <T> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <T> &v));
+		int amebsa_alg(double func(vector <T> &v));
+		vector<T> point;
 		int ndim;
-		vector <vector <double> > p;
+		vector <vector <T> > p;
 		vector <double> y;
 		double yhi;
 		int mpts;
 		int iter;
 		int nfunc;
         double tt;
-		vector <double> psum;
+		vector <T> psum;
 };
 
-template <class T> void Amebsa<T>::print_array(vector <double> tab)
+template <class T> void Amebsa<T>::print_array(vector <T> tab)
 {
 	/*
 	printing values of the array
 	*/
 	for(int i = 0; i<N; i++)
 	{
-		printf("%.2f  ", tab[i]);	
+		cout<<tab[i]<<"  ";	
 	}
 	printf("\n");
 }
 
-template <class T> void Amebsa<T>::print_table(vector <double> tab)
+template <class T> void Amebsa<T>::print_table(vector <T> tab)
 {
 	/*
 	printing values of the table
@@ -72,12 +74,12 @@ template <class T> void Amebsa<T>::print_table(vector <double> tab)
 		{
 			printf("\n");
 		}
-		printf("%+.2f\t", tab[i]);	
+		cout<<tab[i]<<"  ";	
 	}
 	printf("\n");
 }
 
-template <class T> void Amebsa<T>::print_arrow(double s)
+template <class T> void Amebsa<T>::print_arrow(T s)
 {
 	/*
 	printing value as an arrow with proper slope
@@ -102,7 +104,7 @@ template <class T> void Amebsa<T>::print_arrow(double s)
 		printf("x ");
 }
 
-template <class T> void Amebsa<T>::print_arrow_table(vector <double> tab)
+template <class T> void Amebsa<T>::print_arrow_table(vector <T> tab)
 {
 	/*
 	printing values of the table as arrows with proper slope
@@ -116,24 +118,25 @@ template <class T> void Amebsa<T>::print_arrow_table(vector <double> tab)
 	printf("\n\n");
 }
 
-template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vector <double> > &p, int ndim, int ilo)
+template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vector <T> > &p, int ndim, int ilo)
 {
 	/*
 	printing result of optimisation
 	*/
-	double z = 0;
+	T z = 0;
 	vector <double> k = y;
-	vector <vector <double> > q = p;
+	vector <vector <T> > q = p;
 
 	z = k[0];
 	k[0] = k[ilo];
 	k[ilo] = z;
-	vector <double> pmin(ndim);
+
+    double g;
 	for(int i = 0; i<ndim; i++)
 	{
-		z = q[0][i];
+		g = q[0][i];
 		q[0][i] = q[ilo][i];
-		q[ilo][i] = z;
+		q[ilo][i] = g;
 		pmin[i] = q[0][i];
 	}
 	fmin=k[0];
@@ -148,15 +151,15 @@ template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vecto
 	printf("Energy of the system %g\n\n", fmin);
 }
 
-template <class T> vector <double> Amebsa<T>::get_psum(vector <vector <double> > &p, int ndim, int mpts)
+template <class T> vector <T> Amebsa<T>::get_psum(vector <vector <T> > &p, int ndim, int mpts)
 {
 	/*
 	counting partial sum
 	*/
-	vector <double> psum(ndim);
+	vector <T> psum(ndim);
 	for (int j=0; j<ndim; j++)
 	{
-		double sum=0.0;
+		T sum=0;
 		for(int i=0; i<mpts; i++)
 		{
 			sum += p[i][j];
@@ -166,13 +169,13 @@ template <class T> vector <double> Amebsa<T>::get_psum(vector <vector <double> >
 	return psum;
 }
 
-template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector <double> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <double> &v))
+template <class T> double Amebsa<T>::amotsa(vector <vector <T> > &p, vector <T> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <T> &v))
 {
 	/*
 	extrapolation by a factor fac through the face of the simplex across from the high point
 	replacing the high point if the new point is better
 	*/
-	vector <double> ptry(ndim);
+	vector <T> ptry(ndim);
 	double fac1=(1.0-fac)/ndim;
 	double fac2=fac1-fac;
 	for(int j=0; j<ndim; j++)
@@ -194,7 +197,7 @@ template <class T> double Amebsa<T>::amotsa(vector <vector <double> > &p, vector
 	return yflu;
 }
 
-template <class T> void Amebsa<T>::minimize(double func(vector <double> &v))
+template <class T> void Amebsa<T>::minimize(double func(vector <T> &v))
 {
 
 	//creating delta values table
@@ -230,7 +233,7 @@ template <class T> void Amebsa<T>::minimize(double func(vector <double> &v))
 		{
 			x.push_back(p[i][j]);
 		}
-		y[i] = (func(x));
+		y[i] = func(x);
 	}
 	//parameters for iterating
 	nfunc = 0;
@@ -248,7 +251,7 @@ template <class T> void Amebsa<T>::minimize(double func(vector <double> &v))
     }
 }
 
-template <class T> int Amebsa<T>::amebsa_alg(double func(vector <double> &v))
+template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 {
 	int ilo=0;
 	double ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);

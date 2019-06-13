@@ -25,15 +25,17 @@ lukasz.radzinski _at_ gmail _dot_ com
 
 using namespace std;
 
-int N = 400;
+int N = 1000;
 
 int main()
 {
-    vector<double> v = create_random_2PI_table(N);
-	Amebsa<double> a(v);
-    a.show_iter_output = false;
-    cout<<a.fmin<<endl;
+    vector<int> v = create_random_table<int>(N);
+    //vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	Amebsa<int> a(v);
+    //a.show_iter_output = false;
+    //cout<<a.fmin<<endl;
+    a.temperature = {0};
 	a.minimize(multi_parabole);
-    cout<<a.fmin<<endl;
+    //cout<<a.fmin<<endl;
 	return 0;
 }

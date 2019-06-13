@@ -6,11 +6,11 @@
 
 using namespace std;
 
-double multi_parabole(vector <double> &A)
+template <typename T> double multi_parabole(vector <T> &A)
 {
 	//simple multidimentional parabola function for testing optimisation
 	//global minimum in 0
-	double s = 0.0;
+	T s = 0;
 	for(int i=0; i<A.size(); i++)
 	{
 		s += A[i]*A[i];
@@ -57,6 +57,20 @@ vector <double> create_random_2PI_table(int n)
 	for(int i = 0; i<n; i++)
 	{
 		tab[i] = fmod(rand(), 2*M_PI);
+	}
+	return tab;
+}
+
+template <typename T> vector <T> create_random_table(int n)
+{
+	/*
+	creating a starting point of the system:
+	n-dimentional table with random values
+	*/
+	vector <T> tab(n);
+	for(int i = 0; i<n; i++)
+	{
+		tab[i] = rand()%1024;
 	}
 	return tab;
 }
