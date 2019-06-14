@@ -29,13 +29,13 @@ int N = 100;
 
 int main()
 {
-    //vector<double> v = create_random_table<double>(N);
-    vector<double> v = create_random_2PI_table(N);
-    //vector<double> v = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	//vector<double> v = create_random_table<double>(N);
+	vector<double> v = create_random_2PI_table(N);
+	//vector<double> v = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	Amebsa<double> a(v);
-    //a.show_iter_output = false;
-    //a.temperature = {0};
-    a.arrows_table_printing = true;
+	//a.show_iter_output = false;
+	//a.temperature = {0};
+	a.arrows_table_printing = true;
 	a.minimize(ferromagnetic);
 	return 0;
 }

@@ -31,24 +31,24 @@ template <class T> class Amebsa
 		{
 			srand (time(NULL));
 			point = pt;
-            N = pt.size();
+			N = pt.size();
 			ndim = N;
-            pmin.resize(ndim);
+			pmin.resize(ndim);
 		};
 		void minimize(double func(vector <T> &v));
-        vector <double> temperature = {1, 1e-10, 0};
-        double fmin = numeric_limits<double>::max();
-        vector <T> pmin;
-        int NMAX = 1000000; //maximum allowed number of function evaluations
+		vector <double> temperature = {1, 1e-10, 0};
+		double fmin = numeric_limits<double>::max();
+		vector <T> pmin;
+		int NMAX = 1000000; //maximum allowed number of function evaluations
 		int delta = 1; //displacement
 		double ftol = 1e-16; //fractional convergence tolerance
 		double TINY = 1e-7; //tiny value preventing from dividing by 0
-        bool arrows_table_printing = false;
-        bool show_iter_output = true;
-        int iter_period = 1000;
+		bool arrows_table_printing = false;
+		bool show_iter_output = true;
+		int iter_period = 1000;
 	private:
 		int N; //dimention of side of pseudo-square table
-        void print_array(vector <T> tab);
+		void print_array(vector <T> tab);
 		void print_table(vector <T> tab);
 		void print_arrow(T s);
 		void print_arrow_table(vector <T> tab);
@@ -60,18 +60,18 @@ template <class T> class Amebsa
 		int ndim;
 		vector <vector <T> > p;
 		vector <double> y;
-        int ilo;
-        int ihi;
-        int inhi;
-	    double ynhi;
+		int ilo;
+		int ihi;
+		int inhi;
+		double ynhi;
 		double yhi;
-        double ylo;
-        double ytry;
-        double rtol;
+		double ylo;
+		double ytry;
+		double rtol;
 		int mpts;
 		int iter;
 		int nfunc;
-        double tt;
+		double tt;
 		vector <T> psum;
 };
 
@@ -155,7 +155,7 @@ template <class T> void Amebsa<T>::print_result()
 	k[0] = k[ilo];
 	k[ilo] = z;
 
-    double g;
+	double g;
 	for(int i = 0; i<ndim; i++)
 	{
 		g = q[0][i];
@@ -164,14 +164,14 @@ template <class T> void Amebsa<T>::print_result()
 		pmin[i] = q[0][i];
 	}
 	fmin=k[0];
-    printf("\nIteration %d\tTemperature %g\n", iter, -tt);
-    if(arrows_table_printing == true)
-    {
-	    print_table(pmin);
-	    print_arrow_table(pmin);
-    }
-    else
-        print_array(pmin);
+	printf("\nIteration %d\tTemperature %g\n", iter, -tt);
+	if(arrows_table_printing == true)
+	{
+		print_table(pmin);
+		print_arrow_table(pmin);
+	}
+	else
+		print_array(pmin);
 	printf("Energy of the system %g\n\n", fmin);
 }
 
@@ -225,7 +225,7 @@ template <class T> void Amebsa<T>::minimize(double func(vector <T> &v))
 {
 
 	//creating delta values table
-    vector <int> delta_tab;
+	vector <int> delta_tab;
 	for(int i=0; i<ndim; i++)
 	{
 		delta_tab.push_back(delta);
@@ -262,22 +262,22 @@ template <class T> void Amebsa<T>::minimize(double func(vector <T> &v))
 	//parameters for iterating
 	nfunc = 0;
 	psum = get_psum();
-    for(int i=0; i<temperature.size(); i++)
-    {
-	    int w = -1;
-        iter = 0;
-        nfunc = 0;
-        tt = -temperature[i];
-	    while(w<0)
-	    {
-	    	w = amebsa_alg(func);
-	    }
-    }
+	for(int i=0; i<temperature.size(); i++)
+	{
+		int w = -1;
+		iter = 0;
+		nfunc = 0;
+		tt = -temperature[i];
+		while(w<0)
+		{
+			w = amebsa_alg(func);
+		}
+	}
 }
 
 template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 {
-    ilo=0;
+	ilo=0;
 	ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);
 	ihi=1;
 	yhi=y[ihi]+tt*log(0.5*(double)rand()/RAND_MAX);
@@ -358,13 +358,13 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 			psum = get_psum();
 		}
 	} else nfunc = nfunc-1;
-    if(show_iter_output == true)
-    {
-	    if(iter%iter_period == 0)
-	    {
-		    print_result();
-	    }
-    }
+	if(show_iter_output == true)
+	{
+		if(iter%iter_period == 0)
+		{
+			print_result();
+		}
+	}
 	iter++;
 	return -1;
 }
