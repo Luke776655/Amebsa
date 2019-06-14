@@ -1,3 +1,20 @@
+/*
+C++ implementation of the Nelder-Mead optimization algorithm with simulated annealing (Amebsa).
+In this case algorithm search for the energetic minimum of the arrows system.
+When all of the arrows are parallel, the system is in the global minimum.
+GNU GPL license v3
+
+Core algorithm code in line with
+Numerical Receipes
+The Art of Scientific Computing
+Third Edition
+W.H.Press, S.A.Teukolsky,
+W.T Vetterling, B.P.Flannery
+
+Łukasz Radziński
+lukasz.radzinski _at_ gmail _dot_ com
+*/
+
 #include<cstdio>
 #include<iostream>
 #include<cstdlib>
@@ -19,12 +36,12 @@ template <class T> class Amebsa
             pmin.resize(ndim);
 		};
 		void minimize(double func(vector <T> &v));
-        vector <double> temperature = {1, 0.0000000001, 0};
+        vector <double> temperature = {1, 1e-10, 0};
         double fmin = numeric_limits<double>::max();
         vector <T> pmin;
         int NMAX = 1000000; //maximum allowed number of function evaluations
 		int delta = 1; //displacement
-		double ftol = 1e-6; //fractional convergence tolerance
+		double ftol = 1e-16; //fractional convergence tolerance
 		double TINY = 1e-7; //tiny value preventing from dividing by 0
         bool arrows_table_printing = false;
         bool show_iter_output = true;
@@ -35,15 +52,22 @@ template <class T> class Amebsa
 		void print_table(vector <T> tab);
 		void print_arrow(T s);
 		void print_arrow_table(vector <T> tab);
-		void print_result(vector <double> y, vector <vector <T> > &p, int ndim, int ilo);
-		vector <T> get_psum(vector <vector <T> > &p, int ndim, int mpts);
-		double amotsa(vector <vector <T> > &p, vector <T> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <T> &v));
+		void print_result();
+		vector <T> get_psum();
+		double amotsa(double fac, double func(vector <T> &v));
 		int amebsa_alg(double func(vector <T> &v));
 		vector<T> point;
 		int ndim;
 		vector <vector <T> > p;
 		vector <double> y;
+        int ilo;
+        int ihi;
+        int inhi;
+	    double ynhi;
 		double yhi;
+        double ylo;
+        double ytry;
+        double rtol;
 		int mpts;
 		int iter;
 		int nfunc;
@@ -118,7 +142,7 @@ template <class T> void Amebsa<T>::print_arrow_table(vector <T> tab)
 	printf("\n\n");
 }
 
-template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vector <T> > &p, int ndim, int ilo)
+template <class T> void Amebsa<T>::print_result()
 {
 	/*
 	printing result of optimisation
@@ -151,7 +175,7 @@ template <class T> void Amebsa<T>::print_result(vector <double> y, vector <vecto
 	printf("Energy of the system %g\n\n", fmin);
 }
 
-template <class T> vector <T> Amebsa<T>::get_psum(vector <vector <T> > &p, int ndim, int mpts)
+template <class T> vector <T> Amebsa<T>::get_psum()
 {
 	/*
 	counting partial sum
@@ -169,7 +193,7 @@ template <class T> vector <T> Amebsa<T>::get_psum(vector <vector <T> > &p, int n
 	return psum;
 }
 
-template <class T> double Amebsa<T>::amotsa(vector <vector <T> > &p, vector <T> &psum, vector <double> &y, int ihi, int ndim, double fac, double func(vector <T> &v))
+template <class T> double Amebsa<T>::amotsa(double fac, double func(vector <T> &v))
 {
 	/*
 	extrapolation by a factor fac through the face of the simplex across from the high point
@@ -237,7 +261,7 @@ template <class T> void Amebsa<T>::minimize(double func(vector <T> &v))
 	}
 	//parameters for iterating
 	nfunc = 0;
-	psum = get_psum(p, ndim, mpts);
+	psum = get_psum();
     for(int i=0; i<temperature.size(); i++)
     {
 	    int w = -1;
@@ -253,12 +277,11 @@ template <class T> void Amebsa<T>::minimize(double func(vector <T> &v))
 
 template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 {
-	int ilo=0;
-	double ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);
-	int ihi=1;
+    ilo=0;
+	ylo=y[ilo]+tt*log(0.5*(double)rand()/RAND_MAX);
+	ihi=1;
 	yhi=y[ihi]+tt*log(0.5*(double)rand()/RAND_MAX);
-	int inhi;
-	double ynhi;
+
 	if(ylo>yhi)
 	{
 		inhi = 1;
@@ -275,7 +298,6 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 	for (int i=0; i<mpts; i++)
 	{
 		double yi = y[i]+tt*log(0.5*(double)rand()/RAND_MAX);
-		//std::cout<< "yi: " << yi << " ylo: "<< ylo << std::endl;
 		if(yi<=ylo)
 		{
 			ilo = i;
@@ -295,31 +317,31 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 		}
 	}
 
-	double rtol=2.0*abs(y[ihi]-y[ilo])/(abs(y[ihi])+abs(y[ilo])+TINY);
+	rtol=2.0*abs(y[ihi]-y[ilo])/(abs(y[ihi])+abs(y[ilo])+TINY);
 	if (rtol < ftol)
 	{
-		print_result(y, p, ndim, ilo);
+		print_result();
 		printf("Optimisation succeeded\n");
 		return 0;
 	}
 
 	if (nfunc >= NMAX)
 	{
-		print_result(y, p, ndim, ilo);
+		print_result();
 		printf("Maximal number of iterations exceeded\n");
 		return 1;
 	}
 	nfunc += 2;
 
-	double ytry = amotsa(p, psum, y, ihi, ndim, -1.0, func); //simplex reflection
+	ytry = amotsa(-1.0, func); //simplex reflection
 	if(ytry <= ylo)
 	{
-		ytry = amotsa(p, psum, y, ihi, ndim, 2.0, func); //simplex extrapolation
+		ytry = amotsa(2.0, func); //simplex extrapolation
 	}
 	else if (ytry >= ynhi)
 	{
 		double ysave = yhi;
-		ytry = amotsa(p, psum, y, ihi, ndim, 0.5, func); //simplex contraction
+		ytry = amotsa(0.5, func); //simplex contraction
 		if(ytry >= ysave)
 		{
 			for (int i=0;i<mpts;i++) {
@@ -333,14 +355,14 @@ template <class T> int Amebsa<T>::amebsa_alg(double func(vector <T> &v))
 				}
 			}
 			nfunc += ndim;
-			psum = get_psum(p, ndim, mpts);
+			psum = get_psum();
 		}
 	} else nfunc = nfunc-1;
     if(show_iter_output == true)
     {
 	    if(iter%iter_period == 0)
 	    {
-		    print_result(y, p, ndim, ilo);
+		    print_result();
 	    }
     }
 	iter++;

@@ -1,3 +1,20 @@
+/*
+C++ implementation of the Nelder-Mead optimization algorithm with simulated annealing (Amebsa).
+In this case algorithm search for the energetic minimum of the arrows system.
+When all of the arrows are parallel, the system is in the global minimum.
+GNU GPL license v3
+
+Core algorithm code in line with
+Numerical Receipes
+The Art of Scientific Computing
+Third Edition
+W.H.Press, S.A.Teukolsky,
+W.T Vetterling, B.P.Flannery
+
+Łukasz Radziński
+lukasz.radzinski _at_ gmail _dot_ com
+*/
+
 #include<cstdio>
 #include<iostream>
 #include<cstdlib>
@@ -14,6 +31,18 @@ template <typename T> double multi_parabole(vector <T> &A)
 	for(int i=0; i<A.size(); i++)
 	{
 		s += A[i]*A[i];
+	}
+	return s;
+}
+
+template <typename T> double multi_cos(vector <T> &A)
+{
+	//simple multidimentional parabola function for testing optimisation
+	//global minimum in 0
+	T s = 0;
+	for(int i=0; i<A.size(); i++)
+	{
+		s += cos(A[i]);
 	}
 	return s;
 }

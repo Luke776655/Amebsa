@@ -25,17 +25,17 @@ lukasz.radzinski _at_ gmail _dot_ com
 
 using namespace std;
 
-int N = 1000;
+int N = 100;
 
 int main()
 {
-    vector<int> v = create_random_table<int>(N);
-    //vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-	Amebsa<int> a(v);
+    //vector<double> v = create_random_table<double>(N);
+    vector<double> v = create_random_2PI_table(N);
+    //vector<double> v = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	Amebsa<double> a(v);
     //a.show_iter_output = false;
-    //cout<<a.fmin<<endl;
-    a.temperature = {0};
-	a.minimize(multi_parabole);
-    //cout<<a.fmin<<endl;
+    //a.temperature = {0};
+    a.arrows_table_printing = true;
+	a.minimize(ferromagnetic);
 	return 0;
 }
